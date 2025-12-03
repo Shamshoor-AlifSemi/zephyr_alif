@@ -1,0 +1,82 @@
+/* Copyright (C) 2024 Alif Semiconductor - All Rights Reserved.
+* Use, distribution and modification of this code is permitted under the
+* terms stated in the Alif Semiconductor Software License Agreement
+*
+* You should have received a copy of the Alif Semiconductor Software
+* License Agreement with this file. If not, please write to:
+* contact@alifsemi.com, or visit: https://alifsemi.com/license
+*
+*/
+
+/* setting LPSPI0 as master and SPI0 instance as slave.
+*
+*/
+/*
+/ {
+
+	chosen {
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+	};
+	aliases {
+		master-spi = &lpspi0;
+	};
+};
+
+&dma2 {
+	status = "okay";
+};
+
+&lpspi0 {
+	status = "okay";
+
+	dmas = <&dma2 0 13>, <&dma2 1 12>;
+	dma-names = "txdma", "rxdma";
+};
+
+&spi1 {
+	status = "disabled";
+};
+*/
+/*&zephyr_udc0 {
+        cdc_acm_uart0 {
+                compatible = "zephyr,cdc-acm-uart";
+                label = "Zephyr USB CDC-ACM";
+        };
+};*/
+
+&uart2 {
+	status = "okay";
+};
+
+&lpuart {
+	status = "disabled";
+};
+
+/*
+ * I2S_0 => Speaker Output
+ * I2S_2 => Mic Input
+ */
+/*
+i2s_tx: &i2s0 {
+        status = "okay";
+};
+
+i2s_rx: &i2s2 {
+        status = "okay";
+};
+*/
+
+/*
+ * OSPI0 Test with Flash
+ */
+/*
+/{
+        aliases {
+                spi-flash0 = &ospi0;
+        };
+};
+
+&ospi0 {
+        status = "okay";
+};*/

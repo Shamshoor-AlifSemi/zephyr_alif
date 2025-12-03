@@ -1,0 +1,9 @@
+sample:
+  name: SPI Designware Driver Sample
+tests:
+  sample.drivers.spi.dw:
+    tags: drivers spi gpio dma LED
+    filter: dt_enabled_alias_with_parent_compat("led0", "gpio-leds")
+    platform_allow: ensemble
+    depends_on: gpio
+    harness: led

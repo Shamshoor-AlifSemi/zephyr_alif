@@ -1,0 +1,85 @@
+#include <zephyr/kernel.h>
+#include "exerciser_app.h"
+
+/* Thread stack size and priority */
+#define STACK_SIZE 1024
+#define BLINKY_PRIORITY 4
+
+K_THREAD_STACK_DEFINE(blinky_stack, STACK_SIZE);
+struct k_thread blinky_thread_data;
+
+#define OSPI_PRIORITY 5
+
+K_THREAD_STACK_DEFINE(ospi_stack, STACK_SIZE*4);
+struct k_thread ospi_thread_data;
+
+#define SPI_PRIORITY 4
+
+K_THREAD_STACK_DEFINE(spi_stack, STACK_SIZE*4);
+struct k_thread spi_thread_data;
+
+#define SD_PRIORITY 4
+
+K_THREAD_STACK_DEFINE(sd_stack, STACK_SIZE*4);
+struct k_thread sd_thread_data;
+
+#define USB_PRIORITY 4
+
+K_THREAD_STACK_DEFINE(usb_stack, STACK_SIZE*4);
+struct k_thread usb_thread_data;
+
+int main(void)
+{
+	/* Create the blinky thread */
+//	k_tid_t tidb = k_thread_create(
+//			&blinky_thread_data,
+//			blinky_stack,
+//			K_THREAD_STACK_SIZEOF(blinky_stack),
+//			(k_thread_entry_t)blinky_thread,
+//			NULL, NULL, NULL,
+//			BLINKY_PRIORITY,
+//			3,
+//			K_NO_WAIT
+//			);
+//	if (tidb == NULL) {
+//		printk("Error creating Blinky Thread\n");
+//	}
+//	/* Start OSPI flash test thread */
+//	k_tid_t tido = 	k_thread_create(
+//			&ospi_thread_data,
+//			ospi_stack,
+//			K_THREAD_STACK_SIZEOF(ospi_stack),
+//			(k_thread_entry_t)ospi_thread,
+//			NULL, NULL, NULL,
+//			OSPI_PRIORITY,
+//			0xf,
+//			K_NO_WAIT
+//			);
+//	if (tido == NULL) {
+//		printk("Error creating Ospi Thread\n");
+//	}
+//	k_tid_t tids = k_thread_create(&spi_thread_data, spi_stack, STACK_SIZE*2,
+//			(k_thread_entry_t)spi_thread,
+//			NULL, NULL, NULL,
+//			SPI_PRIORITY, 4, K_NO_WAIT);
+//
+//	if (tids == NULL) {
+//		printk("Error creating SPI Master Thread\n");
+//	}
+//	k_tid_t tidsd = k_thread_create(&sd_thread_data, sd_stack, STACK_SIZE*4,
+//			(k_thread_entry_t)sd_thread,
+//			NULL, NULL, NULL,
+//			SD_PRIORITY, 7, K_NO_WAIT);
+//
+//	if (tidsd == NULL) {
+//		printk("Error creating SD thread\n");
+//	}
+	k_tid_t tidu = k_thread_create(&usb_thread_data, usb_stack, STACK_SIZE*4,
+			(k_thread_entry_t)usb_thread,
+			NULL, NULL, NULL,
+			USB_PRIORITY, 7, K_NO_WAIT);
+
+	if (tidu == NULL) {
+		printk("Error creating USB thread\n");
+	}
+}

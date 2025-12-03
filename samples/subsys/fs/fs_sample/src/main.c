@@ -147,7 +147,7 @@ int main(void)
 			break;
 		}
 	} while (0);
-
+while(1){
 	mp.mnt_point = disk_mount_pt;
 
 	int res = fs_mount(&mp);
@@ -178,10 +178,11 @@ int main(void)
 	}
 
 	fs_unmount(&mp);
-
+}
 	while (1) {
 		k_sleep(K_MSEC(1000));
 	}
+
 	return 0;
 }
 
