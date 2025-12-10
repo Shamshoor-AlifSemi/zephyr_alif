@@ -160,20 +160,22 @@ void sd_thread(void)
 			res = fs_unmount(&mp);
 			if (res != FS_RET_OK) {
 				printf("[ SDMMC ]Error unmounting disk\n");
-				return;
+//				return;
 			}
 			res = fs_mount(&mp);
 			if (res != FS_RET_OK) {
 				printf("[ SDMMC ]Error remounting disk\n");
-				return;
+//				return;
 			}
-
+			while(1){
 			if (lsdir(disk_mount_pt) == 0) {
 	#ifdef CONFIG_FS_SAMPLE_CREATE_SOME_ENTRIES
 				if (create_some_entries(disk_mount_pt)) {
 					lsdir(disk_mount_pt);
 				}
 	#endif
+			}
+			k_sleep(K_MSEC(2000));
 			}
 //			sd_operations(disk_mount_pt);
 		} else {

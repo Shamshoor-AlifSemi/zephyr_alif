@@ -11,6 +11,10 @@
  * Definitions
  ******************************************************************************/
 
+#define WM8904_BIAS_CONTROL0          	    (0x04)
+#define WM8904_VMID_CONTROL0          	    (0x05)
+#define WM8904_DC_SERVO_1                   (0x44)
+
 #define WM8904_REG_RESET                    (0x00)
 #define WM8904_REG_ANALOG_ADC_0             (0x0A)
 #define WM8904_REG_POWER_MGMT_0             (0x0C)

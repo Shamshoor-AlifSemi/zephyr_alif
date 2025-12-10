@@ -32,6 +32,9 @@ static void wm8904_read_reg(const struct device *dev, uint8_t reg, uint16_t *val
 static void wm8904_update_reg(const struct device *dev, uint8_t reg, uint16_t mask, uint16_t val);
 static void wm8904_soft_reset(const struct device *dev);
 
+
+#if 0
+
 static void wm8904_configure_output(const struct device *dev);
 
 static void wm8904_configure_input(const struct device *dev);
@@ -180,6 +183,7 @@ static int wm8904_audio_fmt_config(const struct device *dev, audio_dai_cfg_t *cf
 	return 0;
 }
 
+#endif
 static int wm8904_out_update(
 	const struct device *dev,
 	audio_channel_t channel,
@@ -307,6 +311,7 @@ static int wm8904_route_input(const struct device *dev, audio_channel_t channel,
 	return 0;
 }
 
+#if 0
 static void wm8904_set_master_clock(const struct device *dev, audio_dai_cfg_t *cfg, uint32_t sysclk)
 {
 	uint32_t sampleRate = cfg->i2s.frame_clk_freq;
@@ -410,10 +415,14 @@ static void wm8904_set_master_clock(const struct device *dev, audio_dai_cfg_t *c
 	audioInterface = (uint16_t)((1UL << 11U) | (bclk / sampleRate));
 	wm8904_update_reg(dev, WM8904_REG_AUDIO_IF_3, 0xFFFU, audioInterface);
 }
+#endif
+
+#define VOLUME_OUT_CONVERT(vol)	(vol >= 100) ? (63U) : (uint8_t)((vol * 63U) / 100U)
 
 static int wm8904_configure(const struct device *dev, struct audio_codec_cfg *cfg)
 {
-	uint16_t value;
+
+	uint16_t reg_val; uint16_t r_val;
 	const struct wm8904_driver_config *const dev_cfg = DEV_CFG(dev);
 
 	if (cfg->dai_type >= AUDIO_DAI_TYPE_INVALID) {
@@ -421,114 +430,103 @@ static int wm8904_configure(const struct device *dev, struct audio_codec_cfg *cf
 		return -EINVAL;
 	}
 
+	(void) dev_cfg;
+	wm8904_read_reg(dev, WM8904_REG_RESET, &reg_val);
+	if (reg_val != 0x8904) {
+		LOG_ERR("Invalid Device Id");
+		return -EAFNOSUPPORT;
+	}
+
+	//Soft Reset
+	//reg_val = 0x0000U;
+	//wm8904_write_reg(dev, WM8904_REG_RESET, reg_val);
+
 	wm8904_soft_reset(dev);
 
-	if (cfg->dai_route == AUDIO_ROUTE_BYPASS) {
-		return 0;
+	//
+	reg_val = 0x000FU;
+	wm8904_write_reg(dev, WM8904_REG_CLK_RATES_2, reg_val);
+
+	wm8904_read_reg(dev, WM8904_REG_CLK_RATES_2, &r_val);
+	if (reg_val != r_val) {
+		return -1;
 	}
 
-	/* MCLK_INV=0, SYSCLK_SRC=0, TOCLK_RATE=0, OPCLK_ENA=1,
-	 * CLK_SYS_ENA=1, CLK_DSP_ENA=1, TOCLK_ENA=1
-	 */
-	wm8904_write_reg(dev, WM8904_REG_CLK_RATES_2, 0x000F);
+	//
+	reg_val = 0x0100U;
+	wm8904_write_reg(dev, WM8904_REG_WRT_SEQUENCER_0, reg_val);
 
-	/* WSEQ_ENA=1, WSEQ_WRITE_INDEX=0_0000 */
-	wm8904_write_reg(dev, WM8904_REG_WRT_SEQUENCER_0, 0x0100);
+	wm8904_read_reg(dev, WM8904_REG_WRT_SEQUENCER_0, &r_val);
+	if (reg_val != r_val) {
+		return -1;
+	}
 
-	/* WSEQ_ABORT=0, WSEQ_START=1, WSEQ_START_INDEX=00_0000 */
-	wm8904_write_reg(dev, WM8904_REG_WRT_SEQUENCER_3, 0x0100);
+	reg_val = 0x0100U;
+	wm8904_write_reg(dev, WM8904_REG_WRT_SEQUENCER_3, reg_val);
 
+#if 0
+	wm8904_read_reg(dev, WM8904_REG_WRT_SEQUENCER_3, &r_val);
+	if (reg_val != r_val) {
+		return -1;
+	}
+#endif
+	//
 	do {
-		wm8904_read_reg(dev, WM8904_REG_WRT_SEQUENCER_4, &value);
-	} while (((value & 1U) != 0U));
+		wm8904_read_reg(dev, WM8904_REG_WRT_SEQUENCER_4, &reg_val);
+	}while(((reg_val & 0x1) != 0U));
 
-	/* TOCLK_RATE_DIV16=0, TOCLK_RATE_x4=1, SR_MODE=0, MCLK_DIV=1
-	 * (Required for MMCs: SGY, KRT see erratum CE000546)
-	 */
-	wm8904_write_reg(dev, WM8904_REG_CLK_RATES_0, 0xA45F);
+	reg_val = 0x0050U;  //AIFADCR_SRC = AIFDACR_SRC = 1
+	wm8904_write_reg(dev, WM8904_REG_AUDIO_IF_0, reg_val);
 
-	/* INL_ENA=1, INR ENA=1 */
-	wm8904_write_reg(dev, WM8904_REG_POWER_MGMT_0, 0x0003);
-
-	/* HPL_PGA_ENA=1, HPR_PGA_ENA=1 */
-	wm8904_write_reg(dev, WM8904_REG_POWER_MGMT_2, 0x0003);
-
-	/* DACL_ENA=1, DACR_ENA=1, ADCL_ENA=1, ADCR_ENA=1 */
-	wm8904_write_reg(dev, WM8904_REG_POWER_MGMT_6, 0x000F);
-
-	/* ADC_OSR128=1 */
-	wm8904_write_reg(dev, WM8904_REG_ANALOG_ADC_0, 0x0001);
-
-	/* DACL_DATINV=0, DACR_DATINV=0, DAC_BOOST=00, LOOPBACK=0, AIFADCL_SRC=0,
-	 * AIFADCR_SRC=1, AIFDACL_SRC=0, AIFDACR_SRC=1, ADC_COMP=0, ADC_COMPMODE=0,
-	 * DAC_COMP=0, DAC_COMPMODE=0
-	 */
-	wm8904_write_reg(dev, WM8904_REG_AUDIO_IF_0, 0x0050);
-
-	/* DAC_MONO=0, DAC_SB_FILT-0, DAC_MUTERATE=0, DAC_UNMUTE RAMP=0,
-	 * DAC_OSR128=1, DAC_MUTE=0, DEEMPH=0 (none)
-	 */
-	wm8904_write_reg(dev, WM8904_REG_DAC_DIG_1, 0x0040);
-
-	/* Enable DC servos for headphone out */
-	wm8904_write_reg(dev, WM8904_REG_DC_SERVO_0, 0x0003);
-
-	/* HPL_RMV_SHORT=1, HPL_ENA_OUTP=1, HPL_ENA_DLY=1, HPL_ENA=1,
-	 * HPR_RMV_SHORT=1, HPR_ENA_OUTP=1, HPR_ENA_DLY=1, HPR_ENA=1
-	 */
-	wm8904_write_reg(dev, WM8904_REG_ANALOG_HP_0, 0x00FF);
-
-	/* CP_DYN_PWR=1 */
-	wm8904_write_reg(dev, WM8904_REG_CLS_W_0, 0x0001);
-
-	/* CP_ENA=1 */
-	wm8904_write_reg(dev, WM8904_REG_CHRG_PUMP_0, 0x0001);
-
-	wm8904_protocol_config(dev, cfg->dai_type);
-	wm8904_update_reg(dev, WM8904_REG_CLK_RATES_2, (uint16_t)(1UL << 14U),
-			  (uint16_t)(dev_cfg->clock_source));
-
-	if (dev_cfg->clock_source == 0) {
-		int err = clock_control_on(dev_cfg->mclk_dev, dev_cfg->mclk_name);
-
-		if (err < 0) {
-			LOG_ERR("MCLK clock source enable fail: %d", err);
-		}
-
-		err = clock_control_get_rate(dev_cfg->mclk_dev, dev_cfg->mclk_name,
-					     &cfg->mclk_freq);
-		if (err < 0) {
-			LOG_ERR("MCLK clock source freq acquire fail: %d", err);
-		}
+	wm8904_read_reg(dev, WM8904_REG_AUDIO_IF_0, &r_val);
+	if (reg_val != r_val) {
+		return -1;
 	}
 
-	wm8904_audio_fmt_config(dev, &cfg->dai_cfg, cfg->mclk_freq);
 
-	if ((cfg->dai_cfg.i2s.options & I2S_OPT_FRAME_CLK_MASTER) == I2S_OPT_FRAME_CLK_MASTER) {
-		wm8904_set_master_clock(dev, &cfg->dai_cfg, cfg->mclk_freq);
-	} else {
-		/* BCLK/LRCLK default direction input */
-		wm8904_update_reg(dev, WM8904_REG_AUDIO_IF_1, 1U << 6U, 0U);
-		wm8904_update_reg(dev, WM8904_REG_AUDIO_IF_3, (uint16_t)(1UL << 11U), 0U);
+	reg_val = 0x0040U;
+	wm8904_write_reg(dev, WM8904_REG_DAC_DIG_1, reg_val);
+
+	wm8904_read_reg(dev, WM8904_REG_DAC_DIG_1, &r_val);
+	if (reg_val != r_val) {
+		return -1;
 	}
 
-	switch (cfg->dai_route) {
-	case AUDIO_ROUTE_PLAYBACK:
-		wm8904_configure_output(dev);
-		break;
+	reg_val = 0x0001U;  //
+	wm8904_write_reg(dev, WM8904_REG_CLS_W_0, reg_val);
 
-	case AUDIO_ROUTE_CAPTURE:
-		wm8904_configure_input(dev);
-		break;
-
-	case AUDIO_ROUTE_PLAYBACK_CAPTURE:
-		wm8904_configure_output(dev);
-		wm8904_configure_input(dev);
-		break;
-
-	default:
-		break;
+	wm8904_read_reg(dev, WM8904_REG_CLS_W_0, &r_val);
+	if (reg_val != r_val) {
+		return -1;
 	}
+
+	reg_val = 0x0002U;  //16bit WL + Format I2S
+	wm8904_write_reg(dev, WM8904_REG_AUDIO_IF_1, reg_val);
+
+	wm8904_read_reg(dev, WM8904_REG_AUDIO_IF_1, &r_val);
+	if (reg_val != r_val) {
+		return -1;
+	}
+
+	//Set Volume
+	reg_val = (uint16_t) VOLUME_OUT_CONVERT(60);
+
+	//Set volume to left
+	wm8904_write_reg(dev, WM8904_REG_ANALOG_OUT1_LEFT, reg_val);
+
+	wm8904_read_reg(dev, WM8904_REG_ANALOG_OUT1_LEFT, &r_val);
+	if (reg_val != r_val) {
+		return -1;
+	}
+
+	//Set volume to right
+	reg_val |= 0x80;
+	wm8904_write_reg(dev, WM8904_REG_ANALOG_OUT1_RIGHT, reg_val);
+
+	wm8904_read_reg(dev, WM8904_REG_ANALOG_OUT1_RIGHT, &r_val);
+	// if (reg_val != r_val) {
+	// 	return -1;
+	// }
 
 	return 0;
 }
@@ -642,6 +640,7 @@ static void wm8904_soft_reset(const struct device *dev)
 	wm8904_write_reg(dev, WM8904_REG_RESET, 0x00);
 }
 
+#if 0
 static void wm8904_configure_output(const struct device *dev)
 {
 	wm8904_out_volume_config(dev, AUDIO_CHANNEL_ALL, WM8904_OUTPUT_VOLUME_DEFAULT);
@@ -658,6 +657,7 @@ static void wm8904_configure_input(const struct device *dev)
 	wm8904_in_volume_config(dev, AUDIO_CHANNEL_ALL, WM8904_INPUT_VOLUME_DEFAULT);
 	wm8904_in_mute_config(dev, AUDIO_CHANNEL_ALL, false);
 }
+#endif
 
 static const struct audio_codec_api wm8904_driver_api = {
 	.configure = wm8904_configure,
@@ -668,14 +668,11 @@ static const struct audio_codec_api wm8904_driver_api = {
 	.route_input = wm8904_route_input
 };
 
-#define WM8904_INIT(n)                                                                             \
-	static const struct wm8904_driver_config wm8904_device_config_##n = {                      \
-		.i2c = I2C_DT_SPEC_INST_GET(n),                                                    \
-		.clock_source = DT_INST_PROP_OR(n, clk_source, 0),                                 \
-		.mclk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR_BY_NAME(n, mclk)),                   \
-		.mclk_name = (clock_control_subsys_t)DT_INST_CLOCKS_CELL_BY_NAME(n, mclk, name)};  \
-                                                                                                   \
-	DEVICE_DT_INST_DEFINE(n, NULL, NULL, NULL, &wm8904_device_config_##n,        \
-			      POST_KERNEL, CONFIG_AUDIO_CODEC_INIT_PRIORITY, &wm8904_driver_api);
+#define WM8904_INIT(n)                                                                          \
+	static const struct wm8904_driver_config wm8904_device_config_##n = {                   \
+		.i2c = I2C_DT_SPEC_INST_GET(n),                                                 \
+		.clock_source = DT_INST_ENUM_IDX_OR(n, clock_source, 0)};                             \
+ 	DEVICE_DT_INST_DEFINE(n, NULL, NULL, NULL, &wm8904_device_config_##n,			\
+			POST_KERNEL, CONFIG_AUDIO_CODEC_INIT_PRIORITY, &wm8904_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(WM8904_INIT)

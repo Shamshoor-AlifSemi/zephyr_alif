@@ -18,6 +18,20 @@ config FS_SAMPLE_CREATE_SOME_ENTRIES
 	  flash or (Q)SPI connected memories, where it is not possible to
 	  easily add files with use of other device.
 
+config I2S_INIT_BUFFERS
+        int "Initial count of audio data blocks"
+        default 2
+        help
+          Controls the initial count of audio data blocks, which are (optionally)
+          filled by data from the DMIC peripheral and played back by the I2S
+          output perihperal.
+
+config SAMPLE_FREQ
+        int "Sample rate"
+        default 48000
+        help
+          Sample frequency of the system.
+
 source "samples/subsys/usb/common/Kconfig.sample_usbd"
 
 source "Kconfig.zephyr"

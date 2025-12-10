@@ -1,0 +1,34 @@
+# Copyright (C) 2024 Alif Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+source "Kconfig.zephyr"
+
+config SAMPLE_FREQ
+	int "Sample rate"
+	default 48000
+	help
+	  Sample frequency of the audio system in Hz.
+
+config AUDIO_BLOCK_MS
+	int "Audio block duration in milliseconds"
+	default 100
+	help
+	  Duration of each audio block in milliseconds.
+	  Lower values reduce latency but increase CPU overhead.
+	  Typical values: 50ms (low latency) or 100ms (balanced).
+
+config AUDIO_NUM_BLOCKS
+	int "Number of audio blocks"
+	default 4
+	help
+	  Number of audio blocks in the memory slab.
+	  More blocks provide better buffering but use more memory.
+	  Minimum recommended: 2 blocks.
+
+config DEBUG_MODE
+	bool "Enable debug mode (capture then playback)"
+	default n
+	help
+	  If enabled, captures 60KB of audio then plays it once (for debugging).
+	  If disabled, runs continuous real-time audio loopback.
+	  Debug mode is useful for extracting and analyzing captured audio data.

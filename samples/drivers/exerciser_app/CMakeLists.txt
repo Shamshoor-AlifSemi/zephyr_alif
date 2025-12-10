@@ -11,6 +11,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(exerciser_app)
 
 include(${ZEPHYR_BASE}/samples/subsys/usb/common/common.cmake)
-target_sources(app PRIVATE src/main.c src/codec.c src/blinky.c src/ospi.c src/spi.c src/usb.c)
+target_sources(app PRIVATE src/main.c src/codec.c src/blinky.c src/ospi.c src/spi.c src/sd.c src/usb.c src/pdm.c src/i2s.c src/hello_sample.h)
+
 
 

@@ -28,6 +28,16 @@ struct k_thread sd_thread_data;
 K_THREAD_STACK_DEFINE(usb_stack, STACK_SIZE*8);
 struct k_thread usb_thread_data;
 
+#define PDM_PRIORITY 5
+
+K_THREAD_STACK_DEFINE(pdm_stack, STACK_SIZE*4);
+struct k_thread pdm_thread_data;
+
+#define I2S_PRIORITY 4
+
+K_THREAD_STACK_DEFINE(i2s_stack, STACK_SIZE*4);
+struct k_thread i2s_thread_data;
+
 int main(void)
 {
 	/* Create the blinky thread */
@@ -38,8 +48,7 @@ int main(void)
 	if (tidb == NULL) {
 		printk("Error creating Blinky Thread\n");
 	}
-	/* Start OSPI flash test thread */
-	k_tid_t tido = 	k_thread_create(&ospi_thread_data, ospi_stack,
+		k_tid_t tido = 	k_thread_create(&ospi_thread_data, ospi_stack,
 			K_THREAD_STACK_SIZEOF(ospi_stack),
 			(k_thread_entry_t)ospi_thread,
 			NULL, NULL, NULL, OSPI_PRIORITY, 0xf, K_NO_WAIT);
@@ -54,18 +63,32 @@ int main(void)
 	if (tids == NULL) {
 		printk("Error creating SPI Master Thread\n");
 	}
-//	k_tid_t tidsd = k_thread_create(&sd_thread_data, sd_stack, STACK_SIZE*4,
-//			(k_thread_entry_t)sd_thread,
-//			NULL, NULL, NULL, SD_PRIORITY, 4, K_NO_WAIT);
-//
-//	if (tidsd == NULL) {
-//		printk("Error creating SD thread\n");
-//	}
+	k_tid_t tidsd = k_thread_create(&sd_thread_data, sd_stack, STACK_SIZE*4,
+			(k_thread_entry_t)sd_thread,
+			NULL, NULL, NULL, SD_PRIORITY, 4, K_NO_WAIT);
+
+	if (tidsd == NULL) {
+		printk("Error creating SD thread\n");
+	}
 	k_tid_t tidu = k_thread_create(&usb_thread_data, usb_stack, STACK_SIZE*8,
 			(k_thread_entry_t)usb_thread,
 			NULL, NULL, NULL, USB_PRIORITY, 0, K_NO_WAIT);
 
 	if (tidu == NULL) {
+		printk("Error creating USB thread\n");
+	}
+	k_tid_t tidp = k_thread_create(&pdm_thread_data, pdm_stack, STACK_SIZE*4,
+			(k_thread_entry_t)pdm_thread,
+			NULL, NULL, NULL, PDM_PRIORITY, 2, K_NO_WAIT);
+
+	if (tidp == NULL) {
+		printk("Error creating USB thread\n");
+	}
+	k_tid_t tidi = k_thread_create(&i2s_thread_data, i2s_stack, STACK_SIZE*4,
+			(k_thread_entry_t)i2s_thread,
+			NULL, NULL, NULL, I2S_PRIORITY, 8, K_NO_WAIT);
+
+	if (tidi == NULL) {
 		printk("Error creating USB thread\n");
 	}
 	return 0;

@@ -1,0 +1,14 @@
+sample:
+  name: PDM to I2S Audio Loopback
+  description: Real-time audio loopback from PDM to I2S codec
+tests:
+  sample.drivers.pdm_i2s:
+    tags: audio i2s dmic
+    filter: dt_nodelabel_enabled("lppdm") and dt_nodelabel_enabled("i2s0")
+    harness: console
+    harness_config:
+      type: multi_line
+      ordered: true
+      regex:
+        - "PDM to I2S Audio Loopback"
+        - "Audio loopback started"

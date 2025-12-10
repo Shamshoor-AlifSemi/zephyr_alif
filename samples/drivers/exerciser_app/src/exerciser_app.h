@@ -6,5 +6,7 @@ void ospi_thread(void);
 void spi_thread(void);
 void sd_thread(void);
 void usb_thread(void);
+void pdm_thread(void);
+void i2s_thread(void);
  
 #endif // EXERCISER_APP_H
